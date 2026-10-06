@@ -40,4 +40,7 @@ interface QuizDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRegistration(registration: StudentRegistrationEntity): Long
+
+    @Query("DELETE FROM student_registrations WHERE id = :id")
+    suspend fun deleteRegistrationById(id: Int)
 }

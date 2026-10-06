@@ -26,7 +26,8 @@ enum class MainTab {
     STAGES_AND_GUIDE,
     TEAMS,
     QUESTION_BANK,
-    LEADERBOARD
+    LEADERBOARD,
+    WEB_PORTAL
 }
 
 enum class GuideSubSection {
@@ -266,6 +267,15 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         _activeRegistration.value = registration
         _studentName.value = registration.studentName
         _selectedGrade.value = registration.gradeLevel
+    }
+
+    fun deleteStudentRegistration(id: Int) {
+        viewModelScope.launch {
+            repository.deleteRegistration(id)
+            if (_activeRegistration.value?.id == id) {
+                _activeRegistration.value = null
+            }
+        }
     }
 
     fun lookupStudentByParticipationCode(

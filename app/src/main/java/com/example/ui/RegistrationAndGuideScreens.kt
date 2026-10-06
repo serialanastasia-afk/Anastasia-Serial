@@ -21,20 +21,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,11 +38,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,7 +55,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -82,23 +82,28 @@ fun StudentRegistrationScreen(
         onGenerated: (StudentRegistrationEntity) -> Unit
     ) -> Unit,
     onActivateExistingRegistration: (StudentRegistrationEntity) -> Unit,
+    onDeleteRegistration: (Int) -> Unit = {},
     onLookupCode: (String, (StudentRegistrationEntity?) -> Unit) -> Unit,
     onStartOfficialQualifierExam: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val clipboardManager = LocalClipboardManager.current
     val gradeOptions = listOf(
         "الصف الرابع الابتدائي",
         "الصف الخامس الابتدائي",
         "الصف السادس الابتدائي"
     )
 
-    var fullName by remember { mutableStateOf(activeRegistration?.studentName ?: "") }
-    var selectedGrade by remember { mutableStateOf(activeRegistration?.gradeLevel ?: gradeOptions[1]) }
-    var classroom by remember { mutableStateOf(activeRegistration?.classroom ?: "٥/أ") }
-    var studentNumber by remember { mutableStateOf(activeRegistration?.studentNumberOrId ?: "") }
-    var teamName by remember { mutableStateOf(activeRegistration?.teamName ?: "") }
-    var parentContact by remember { mutableStateOf(activeRegistration?.parentContact ?: "") }
+    var fullName by remember { mutableStateOf("") }
+    var selectedGrade by remember { mutableStateOf(gradeOptions[1]) }
+    var classroom by remember { mutableStateOf("٥/أ") }
+    var studentNumber by remember { mutableStateOf("") }
+    var teamName by remember { mutableStateOf("") }
+    var parentContact by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var newlyIssuedRegistration by remember { mutableStateOf<StudentRegistrationEntity?>(null) }
+    var copiedFeedback by remember { mutableStateOf<String?>(null) }
 
     var lookupCodeInput by remember { mutableStateOf("") }
     var lookupFeedback by remember { mutableStateOf<String?>(null) }
@@ -119,12 +124,17 @@ fun StudentRegistrationScreen(
                 item {
                     ParticipationCodeTicketCard(
                         registration = activeRegistration,
+                        copiedMessage = copiedFeedback,
+                        onCopyCode = { code ->
+                            clipboardManager.setText(AnnotatedString(code))
+                            copiedFeedback = "تم نسخ كود المشاركة ($code) بنجاح!"
+                        },
                         onStartQualifier = onStartOfficialQualifierExam
                     )
                 }
             }
 
-            // Registration Form Card
+            // Registration Form Card (حفظ في Room Database)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -155,12 +165,12 @@ fun StudentRegistrationScreen(
                             }
                             Column {
                                 Text(
-                                    text = "تسجيل طالب جديد في البطولة",
+                                    text = "تسجيل بيانات الطالب في المسابقة",
                                     style = MaterialTheme.typography.titleLarge,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "سجّل بياناتك للحصول على 🎟️ كود المشاركة الرسمي للدخول إلى التصفيات",
+                                    text = "تُحفظ البيانات محلياً في قاعدة بيانات المدرسة (Room) ويصدر للطالب 🎟️ كود مشاركة فريد",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -174,7 +184,7 @@ fun StudentRegistrationScreen(
                                 fullName = it
                                 errorMessage = null
                             },
-                            label = { Text("اسم الطالب ثلاثياً *") },
+                            label = { Text("اسم الطالب *") },
                             placeholder = { Text("مثال: عمر أحمد محمود") },
                             singleLine = true,
                             shape = RoundedCornerShape(14.dp),
@@ -185,7 +195,7 @@ fun StudentRegistrationScreen(
 
                         // 2. الصف الدراسي (الرابع / الخامس / السادس الابتدائي)
                         Text(
-                            text = "الصف الدراسي (المرحلة الابتدائية العليا) *:",
+                            text = "الصف الدراسي *:",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -251,7 +261,7 @@ fun StudentRegistrationScreen(
                             }
                         }
 
-                        // 3. الفصل & 4. رقم الطالب أو كود المدرسة
+                        // 3. الفصل & 4. رقم الطالب أو الكود المدرسي
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -274,7 +284,7 @@ fun StudentRegistrationScreen(
                             OutlinedTextField(
                                 value = studentNumber,
                                 onValueChange = { studentNumber = it },
-                                label = { Text("رقم الطالب بالمدرسة") },
+                                label = { Text("رقم الطالب / الكود") },
                                 placeholder = { Text("مثال: 1042") },
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
@@ -321,7 +331,7 @@ fun StudentRegistrationScreen(
                         Button(
                             onClick = {
                                 if (fullName.trim().length < 2) {
-                                    errorMessage = "يرجى إدخال اسم الطالب ثلاثياً أو ثنائياً بوضوح."
+                                    errorMessage = "يرجى إدخال اسم الطالب بوضوح."
                                 } else if (classroom.trim().isEmpty()) {
                                     errorMessage = "يرجى كتابة اسم أو رقم الفصل الدراسي."
                                 } else {
@@ -333,7 +343,9 @@ fun StudentRegistrationScreen(
                                         teamName,
                                         parentContact
                                     ) { generated ->
-                                        lookupFeedback = "تم إصدار كود المشاركة بنجاح: ${generated.participationCode}"
+                                        newlyIssuedRegistration = generated
+                                        fullName = ""
+                                        studentNumber = ""
                                     }
                                 }
                             },
@@ -349,7 +361,7 @@ fun StudentRegistrationScreen(
                             Icon(imageVector = Icons.Default.ConfirmationNumber, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "إصدار 🎟️ كود المشاركة في المسابقة",
+                                text = "حفظ البيانات وإصدار 🎟️ كود المشاركة",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
@@ -369,7 +381,7 @@ fun StudentRegistrationScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "لديك 🎟️ كود مشاركة بالفعل؟ أدخله هنا:",
+                            text = "الدخول بكود مشاركة محفوظ 🎟️",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -384,7 +396,7 @@ fun StudentRegistrationScreen(
                                     lookupCodeInput = it
                                     lookupFeedback = null
                                 },
-                                label = { Text("كود المشاركة (مثال: OM-5-4821)") },
+                                label = { Text("أدخل كود المشاركة (مثال: OM-5-4821)") },
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
                                 modifier = Modifier
@@ -396,7 +408,7 @@ fun StudentRegistrationScreen(
                                     if (lookupCodeInput.isNotBlank()) {
                                         onLookupCode(lookupCodeInput) { found ->
                                             lookupFeedback = if (found != null) {
-                                                "مرحباً بعودتك يا ${found.studentName}!"
+                                                "تم استرجاع بيانات الطالب: ${found.studentName} (${found.gradeLevel})"
                                             } else {
                                                 "لم يتم العثور على هذا الكود، تأكد من كتابته بشكل صحيح أو سجّل كطالب جديد."
                                             }
@@ -404,9 +416,11 @@ fun StudentRegistrationScreen(
                                     }
                                 },
                                 shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.height(54.dp)
+                                modifier = Modifier
+                                    .height(54.dp)
+                                    .testTag("lookup_code_button")
                             ) {
-                                Text("تفعيل الكود")
+                                Text("دخول بالكود")
                             }
                         }
                         if (lookupFeedback != null) {
@@ -421,22 +435,30 @@ fun StudentRegistrationScreen(
                 }
             }
 
-            // Saved Student Cards List
+            // Saved Student Cards List in Room Database
             if (savedRegistrations.isNotEmpty()) {
                 item {
                     Text(
-                        text = "بطاقات الطلاب المسجلين على هذا الجهاز (${savedRegistrations.size}):",
+                        text = "سجل الطلاب المحفوظين في قاعدة البيانات (${savedRegistrations.size}):",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 items(savedRegistrations, key = { it.id }) { reg ->
+                    val isCurrentlyActive = activeRegistration?.id == reg.id
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onActivateExistingRegistration(reg) },
+                            .border(
+                                width = if (isCurrentlyActive) 2.dp else 0.dp,
+                                color = if (isCurrentlyActive) CorrectEmerald else Color.Transparent,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .clickable { onActivateExistingRegistration(reg) }
+                            .testTag("saved_student_card_${reg.id}"),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -445,27 +467,47 @@ fun StudentRegistrationScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 Text(
                                     text = reg.studentName,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = "${reg.gradeLevel} • فصل ${reg.classroom}",
+                                    text = "${reg.gradeLevel} • فصل ${reg.classroom} • رقم: ${reg.studentNumberOrId}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = ChampionshipGold.copy(alpha = 0.22f)
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = "🎟️ ${reg.participationCode}",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Color(0xFF92400E),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = ChampionshipGold.copy(alpha = 0.22f)
+                                ) {
+                                    Text(
+                                        text = "🎟️ ${reg.participationCode}",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Color(0xFF92400E),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { onDeleteRegistration(reg.id) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "حذف التسجيل",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
                     }
@@ -473,11 +515,119 @@ fun StudentRegistrationScreen(
             }
         }
     }
+
+    // Celebratory Modal Dialog Showing the Newly Generated Participation Code
+    if (newlyIssuedRegistration != null) {
+        val reg = newlyIssuedRegistration!!
+        AlertDialog(
+            onDismissRequest = { newlyIssuedRegistration = null },
+            title = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = CorrectEmerald.copy(alpha = 0.16f),
+                        modifier = Modifier.size(64.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = CorrectEmerald,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "تم تسجيل الطالب بنجاح! 🎉",
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "أهلاً بك يا «${reg.studentName}» في مسابقة عباقرة عيون مصر (${reg.gradeLevel} - فصل ${reg.classroom}).",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = RoyalNavyDark,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "🎟️ كود المشاركة الفريد الخاص بك",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFCBD5E1)
+                            )
+                            Text(
+                                text = reg.participationCode,
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = ChampionshipGold,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.testTag("dialog_generated_participation_code")
+                            )
+                            OutlinedButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(reg.participationCode))
+                                    copiedFeedback = "تم نسخ كود المشاركة (${reg.participationCode})!"
+                                },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "نسخ الكود",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("نسخ الكود", color = Color.White)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        newlyIssuedRegistration = null
+                        onStartOfficialQualifierExam()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CorrectEmerald),
+                    modifier = Modifier.testTag("dialog_start_qualifier_button")
+                ) {
+                    Text("بدء اختبار التصفيات الآن")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { newlyIssuedRegistration = null }) {
+                    Text("إغلاق")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun ParticipationCodeTicketCard(
     registration: StudentRegistrationEntity,
+    copiedMessage: String? = null,
+    onCopyCode: (String) -> Unit = {},
     onStartQualifier: () -> Unit
 ) {
     Card(
@@ -522,16 +672,39 @@ fun ParticipationCodeTicketCard(
 
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = ChampionshipGold
+                    color = ChampionshipGold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable { onCopyCode(registration.participationCode) }
                 ) {
-                    Text(
-                        text = "🎟️ ${registration.participationCode}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = RoyalNavyDark,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "🎟️ ${registration.participationCode}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = RoyalNavyDark,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag("active_ticket_code_text")
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "نسخ كود المشاركة",
+                            tint = RoyalNavyDark,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
+            }
+
+            if (copiedMessage != null) {
+                Text(
+                    text = copiedMessage,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = CorrectEmerald
+                )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -541,7 +714,7 @@ fun ParticipationCodeTicketCard(
                     color = ChampionshipGold
                 )
                 Text(
-                    text = "${registration.gradeLevel} • الفصل: ${registration.classroom}" +
+                    text = "${registration.gradeLevel} • الفصل: ${registration.classroom} • الكود المدرسي: ${registration.studentNumberOrId}" +
                         if (registration.teamName.isNotBlank()) " • الفريق: ${registration.teamName}" else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFE2E8F0)
@@ -592,7 +765,6 @@ fun TournamentGuideScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Section Switcher Pills (📖 كيف تلعب؟ | 🏆 مراحل البطولة | ℹ️ عن المسابقة)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -710,7 +882,6 @@ fun TournamentGuideScreen(
                         }
                     }
 
-                    // Official 50-Question Breakdown Table
                     item {
                         OfficialQuotaBreakdownCard()
                     }

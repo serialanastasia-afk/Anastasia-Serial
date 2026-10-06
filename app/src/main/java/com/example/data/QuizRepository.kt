@@ -87,6 +87,10 @@ class QuizRepository(private val quizDao: QuizDao) {
         quizDao.insertRegistration(registration)
     }
 
+    suspend fun deleteRegistration(id: Int) {
+        quizDao.deleteRegistrationById(id)
+    }
+
     suspend fun findStudentByCode(code: String): StudentRegistrationEntity? {
         return quizDao.findRegistrationByCode(code.trim().uppercase())
     }

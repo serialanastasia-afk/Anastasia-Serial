@@ -66,6 +66,7 @@ import com.example.ui.QuizViewModelFactory
 import com.example.ui.StudentRegistrationScreen
 import com.example.ui.TeamBattleSetupScreen
 import com.example.ui.TournamentGuideScreen
+import com.example.ui.WebPlatformExportScreen
 import com.example.ui.WelcomeSplashScreen
 import com.example.ui.theme.ChampionshipGold
 import com.example.ui.theme.MyApplicationTheme
@@ -179,6 +180,16 @@ fun OyounMasrQuizApp(viewModel: QuizViewModel) {
                             },
                             actions = {
                                 IconButton(
+                                    onClick = { viewModel.selectTab(MainTab.WEB_PORTAL) },
+                                    modifier = Modifier.testTag("open_web_portal_top_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ConfirmationNumber,
+                                        contentDescription = "نسخة موقع الويب الجاهزة للنشر",
+                                        tint = Color(0xFF38BDF8)
+                                    )
+                                }
+                                IconButton(
                                     onClick = { viewModel.returnToWelcomeScreen() },
                                     modifier = Modifier.testTag("return_to_welcome_button")
                                 ) {
@@ -236,6 +247,13 @@ fun OyounMasrQuizApp(viewModel: QuizViewModel) {
                                 icon = { Icon(Icons.Default.EmojiEvents, contentDescription = "النتائج") },
                                 label = { Text("النتائج") },
                                 modifier = Modifier.testTag("nav_tab_leaderboard")
+                            )
+                            NavigationBarItem(
+                                selected = selectedTab == MainTab.WEB_PORTAL,
+                                onClick = { viewModel.selectTab(MainTab.WEB_PORTAL) },
+                                icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "موقع الويب") },
+                                label = { Text("موقع الويب") },
+                                modifier = Modifier.testTag("nav_tab_web_portal")
                             )
                         }
                     }
@@ -360,6 +378,7 @@ fun OyounMasrQuizApp(viewModel: QuizViewModel) {
                                             savedRegistrations = allRegistrations,
                                             onRegisterStudent = viewModel::registerNewStudent,
                                             onActivateExistingRegistration = viewModel::activateRegistration,
+                                            onDeleteRegistration = viewModel::deleteStudentRegistration,
                                             onLookupCode = viewModel::lookupStudentByParticipationCode,
                                             onStartOfficialQualifierExam = viewModel::startOfficialOnlineQualifierExam
                                         )
@@ -403,6 +422,14 @@ fun OyounMasrQuizApp(viewModel: QuizViewModel) {
                                         LeaderboardScreen(
                                             scores = allScores,
                                             onClearScores = viewModel::clearAllScores
+                                        )
+                                    }
+
+                                    MainTab.WEB_PORTAL -> {
+                                        WebPlatformExportScreen(
+                                            allQuestions = allQuestions,
+                                            allScores = allScores,
+                                            allRegistrations = allRegistrations
                                         )
                                     }
                                 }
