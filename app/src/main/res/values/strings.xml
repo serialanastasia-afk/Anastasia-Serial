@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">عباقرة عيون مصر</string>
+    <string name="school_subtitle">مسابقة مدرسة عيون مصر الثقافية للمرحلة الابتدائية العليا</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_teams">تحدي الفرق</string>
+    <string name="nav_bank">بنك الأسئلة</string>
+    <string name="nav_leaderboard">لوحة الشرف</string>
+    <string name="start_solo_quiz">تحدي العبقري الفردي</string>
+    <string name="start_team_quiz">مواجهة الفصول والفرق</string>
+    <string name="add_question">إضافة سؤال جديد</string>
+    <string name="hero_banner_desc">شعار مسابقة عباقرة مدرسة عيون مصر</string>
+</resources>

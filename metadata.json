@@ -1,0 +1,6 @@
+{
+  "name": "عباقرة عيون مصر",
+  "description": "مسابقة ثقافية تفاعلية وتنافسية لطلاب المرحلة الابتدائية العليا في مدرسة عيون مصر تشمل العلوم والتاريخ والجغرافيا والرياضيات واللغة العربية والمعلومات العامة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
