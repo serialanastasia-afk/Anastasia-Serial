@@ -2,7 +2,7 @@ package com.example.data
 
 object InitialQuestionsData {
     fun getSeedQuestions(): List<QuestionEntity> = listOf(
-        // ==================== 1. العلوم والفضاء (SCIENCE) ====================
+        // ==================== 1. العلوم والفضاء (SCIENCE - 12 سؤالاً، يُختار منها 10 في التصفيات) ====================
         QuestionEntity(
             categoryId = QuizCategory.SCIENCE.id,
             gradeLevel = "الصف الرابع",
@@ -123,8 +123,32 @@ object InitialQuestionsData {
             correctOptionIndex = 2,
             explanation = "التبخر هو عملية تحول السائل (مثل الماء) إلى غاز (بخار ماء) عند اكتساب طاقة حرارية."
         ),
+        QuestionEntity(
+            categoryId = QuizCategory.SCIENCE.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 2,
+            questionText = "ما الجزء المسؤول في الخلية النباتية عن صنع الغذاء واحتوائه على مادة الكلوروفيل الخضراء؟",
+            optionA = "النواة",
+            optionB = "البلاستيدات الخضراء",
+            optionC = "الجدار الخلوي",
+            optionD = "الميتوكوندريا",
+            correctOptionIndex = 1,
+            explanation = "البلاستيدات الخضراء تحتوي على صبغ الكلوروفيل الذي يمتص ضوء الشمس للقيام بعملية البناء الضوئي."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.SCIENCE.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 1,
+            questionText = "أي من مصادر الطاقة التالية يُعد مصدراً متجدداً ونظيفاً ولا ينفد؟",
+            optionA = "الفحم الحجري",
+            optionB = "الطاقة الشمسية وطاقة الرياح",
+            optionC = "البترول",
+            optionD = "الغاز الطبيعي",
+            correctOptionIndex = 1,
+            explanation = "الطاقة الشمسية وطاقة الرياح من مصادر الطاقة المتجددة النظيفة التي لا تلوث البيئة ولا تنفد."
+        ),
 
-        // ==================== 2. تاريخ وجغرافيا مصر (EGYPT_HISTORY) ====================
+        // ==================== 2. مصر والعالم / تاريخ وجغرافيا (EGYPT_HISTORY - 10 أسئلة، يُختار 6 في التصفيات) ====================
         QuestionEntity(
             categoryId = QuizCategory.EGYPT_HISTORY.id,
             gradeLevel = "الصف الرابع",
@@ -237,16 +261,16 @@ object InitialQuestionsData {
             categoryId = QuizCategory.EGYPT_HISTORY.id,
             gradeLevel = "الصف السادس",
             difficulty = 2,
-            questionText = "أين تقع مكتبة الإسكندرية الشهيرة التي تُعد منارة للثقافة والعلوم؟",
-            optionA = "على ساحل البحر الأحمر",
-            optionB = "على ساحل البحر المتوسط",
-            optionC = "في شبه جزيرة سيناء",
-            optionD = "في واحة سيوة",
-            correctOptionIndex = 1,
-            explanation = "تقع مدينة الإسكندرية ومكتبتها العريقة على ساحل البحر المتوسط شمال مصر."
+            questionText = "في أي قارة تقع جمهورية مصر العربية بمساحتها الكبرى، وما القارة التي يمتد إليها جزء من سيناء؟",
+            optionA = "أفريقيا وتمتد سيناء في آسيا",
+            optionB = "أوروبا وتمتد في أفريقيا",
+            optionC = "آسيا بالكامل",
+            optionD = "أمريكا الجنوبية",
+            correctOptionIndex = 0,
+            explanation = "تقع مصر في الركن الشمالي الشرقي لقارة أفريقيا، وتتميز بامتداد آسيوي يتمثل في شبه جزيرة سيناء."
         ),
 
-        // ==================== 3. لغتنا الجميلة (ARABIC) ====================
+        // ==================== 3. اللغة العربية (ARABIC - 9 أسئلة، يُختار 6 في التصفيات) ====================
         QuestionEntity(
             categoryId = QuizCategory.ARABIC.id,
             gradeLevel = "الصف الرابع",
@@ -356,7 +380,7 @@ object InitialQuestionsData {
             explanation = "(ذا) هنا بمعنى (صاحب) وهي من الأسماء الخمسة، وقعت مفعولاً به منصوباً وعلامة نصبه الألف."
         ),
 
-        // ==================== 4. الرياضيات والذكاء (MATH_LOGIC) ====================
+        // ==================== 4. الرياضيات والذكاء الحسابي (MATH_LOGIC - 10 أسئلة، يُختار 8 في التصفيات) ====================
         QuestionEntity(
             categoryId = QuizCategory.MATH_LOGIC.id,
             gradeLevel = "الصف الرابع",
@@ -455,8 +479,34 @@ object InitialQuestionsData {
         ),
         QuestionEntity(
             categoryId = QuizCategory.MATH_LOGIC.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "ما ناتج العملية الحسابية بترتيب العمليات الصحيح: ١٠ + ٤ × ٣ - ٢ ؟",
+            optionA = "٤٠",
+            optionB = "٢٠",
+            optionC = "٢٨",
+            optionD = "١٨",
+            correctOptionIndex = 1,
+            explanation = "في ترتيب العمليات الحسابية نبدأ بالضرب أولاً: ٤ × ٣ = ١٢، ثم ١٠ + ١٢ - ٢ = ٢٠."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.MATH_LOGIC.id,
             gradeLevel = "الصف السادس",
-            difficulty = 3,
+            difficulty = 2,
+            questionText = "قطار يتحرك بسرعة ثابتة ويقطع ١٨٠ كيلومتراً في ٣ ساعات، فكم كيلومتراً يقطع في الساعة الواحدة؟",
+            optionA = "٥٠ كم/ساعة",
+            optionB = "٦٠ كم/ساعة",
+            optionC = "٧٠ كم/ساعة",
+            optionD = "٩٠ كم/ساعة",
+            correctOptionIndex = 1,
+            explanation = "السرعة = المسافة ÷ الزمن = ١٨٠ ÷ ٣ = ٦٠ كيلومتراً في الساعة."
+        ),
+
+        // ==================== 5. المنطق والاستنتاج (LOGIC_DEDUCTION - 9 أسئلة، يُختار 8 في التصفيات) ====================
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 2,
             questionText = "لغز العباقرة: إذا سبقتَ المتسابق الذي في المركز الثاني في سباق للجري، ففي أي مركز تصبح أنت؟",
             optionA = "المركز الأول",
             optionB = "المركز الثاني",
@@ -465,8 +515,201 @@ object InitialQuestionsData {
             correctOptionIndex = 1,
             explanation = "عندما تتجاوز صاحب المركز الثاني فأنت تأخذ مكانه وتصبح في المركز الثاني، لأن صاحب المركز الأول ما زال أمامك!"
         ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 2,
+            questionText = "إذا كان (أحمد أطول من كريم)، و(كريم أطول من سيف)، و(مازن أطول من أحمد)، فمن هو الأقصر بينهم جميعاً؟",
+            visualClueText = "مازن ⬅ أحمد ⬅ كريم ⬅ ؟",
+            optionA = "أحمد",
+            optionB = "كريم",
+            optionC = "سيف",
+            optionD = "مازن",
+            correctOptionIndex = 2,
+            explanation = "ترتيب الطول من الأطول للأقصر هو: مازن ثم أحمد ثم كريم ثم سيف، إذن سيف هو الأقصر."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "لأمّ سارة أربع بنات: (ندى، ريم، جنى)... فما اسم الابنة الرابعة؟",
+            optionA = "مريم",
+            optionB = "سارة",
+            optionC = "هدى",
+            optionD = "نور",
+            correctOptionIndex = 1,
+            explanation = "السؤال يبدأ بـ «لأمّ سارة أربع بنات»، إذن الابنة الرابعة هي سارة نفسها!"
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "إذا كان اليوم هو يوم الثلاثاء، فما هو اليوم الذي سيأتي بعد ١٠ أيام من اليوم؟",
+            visualClueText = "الأسبوع = ٧ أيام | ١٠ أيام = أسبوع كامل + ٣ أيام",
+            optionA = "يوم الخميس",
+            optionB = "يوم الجمعة",
+            optionC = "يوم السبت",
+            optionD = "يوم الأحد",
+            correctOptionIndex = 1,
+            explanation = "بعد ٧ أيام يعود يوم الثلاثاء، ثم نعد ٣ أيام إضافية (الأربعاء، الخميس، الجمعة)."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 3,
+            questionText = "في شفرة العباقرة، إذا كانت كلمة (قلم = ٣٠) وكلمة (كتاب = ٤٠) وكلمة (مدرسة = ٥٠)، فكم تساوي كلمة (علم)؟",
+            visualClueText = "ق ل م (٣ حروف) = ٣٠ | ك ت ا ب (٤ حروف) = ٤٠ | م د ر س ة (٥ حروف) = ٥٠",
+            optionA = "٢٠",
+            optionB = "٣٠",
+            optionC = "٤٠",
+            optionD = "٣٥",
+            correctOptionIndex = 1,
+            explanation = "كل حرف في الكلمة يساوي ١٠ نقاط، وكلمة (علم) مكونة من ٣ حروف إذن تساوي ٣٠."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 1,
+            questionText = "أيهما أثقل وزناً على الميزان: كيلوجرام واحد من الحديد أم كيلوجرام واحد من القطن؟",
+            optionA = "كيلوجرام الحديد أثقل",
+            optionB = "كيلوجرام القطن أثقل",
+            optionC = "الاثنان متساويان في الوزن تماماً (١ كجم)",
+            optionD = "يختلف حسب حجم الصندوق",
+            correctOptionIndex = 2,
+            explanation = "كلاهما يزن ١ كيلوجرام بالضبط! الاختلاف يكون في الحجم والكثافة فقط وليس في الوزن."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "أي الكلمات التالية هي الكلمة المختلفة منطقياً عن باقي المجموعة؟",
+            visualClueText = "[ القاهرة  •  الرياض  •  الإسكندرية  •  بغداد ]",
+            optionA = "القاهرة",
+            optionB = "الرياض",
+            optionC = "الإسكندرية",
+            optionD = "بغداد",
+            correctOptionIndex = 2,
+            explanation = "القاهرة والرياض وبغداد كلها عواصم لدول عربية، بينما الإسكندرية مدينة ساحلية عريقة وليست عاصمة."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 3,
+            questionText = "خزان مياه تتضاعف فيه كمية الماء كل دقيقة، فإذا امتلأ الخزان بالكامل في الدقيقة ٢٠، ففي أي دقيقة كان نصف الخزان ممتلئاً؟",
+            optionA = "في الدقيقة ١٠",
+            optionB = "في الدقيقة ١٥",
+            optionC = "في الدقيقة ١٩",
+            optionD = "في الدقيقة ١٨",
+            correctOptionIndex = 2,
+            explanation = "بما أن الكمية تتضاعف كل دقيقة، فإن الخزان كان في الدقيقة ١٩ ممتلئاً إلى النصف، وفي الدقيقة ٢٠ تضاعف فامتلأ بالكامل!"
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.LOGIC_DEDUCTION.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 2,
+            questionText = "ما العلاقة المنطقية المشابهة لعلاقة: (الطبيب : المستشفى)؟",
+            optionA = "المعلم : المدرسة",
+            optionB = "الكتاب : القلم",
+            optionC = "السيارة : القطار",
+            optionD = "الشمس : القمر",
+            correctOptionIndex = 0,
+            explanation = "الطبيب يعمل في المستشفى، وبنفس العلاقة المنطقية المعلم يعمل في المدرسة."
+        ),
 
-        // ==================== 5. المعلومات العامة (GENERAL) ====================
+        // ==================== 6. الملاحظة والتركيز (OBSERVATION_FOCUS - 7 أسئلة، يُختار 6 في التصفيات) ====================
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 1,
+            questionText = "ركّز جيداً في اللوحة التالية: ما الرمز الذي يكمل النمط البصري بترتيب صحيح؟",
+            visualClueText = "🔵 🔺 🟢  |  🔵 🔺 🟢  |  🔵 🔺 ❓",
+            optionA = "🔵 دائرة زرقاء",
+            optionB = "🔺 مثلث أحمر",
+            optionC = "🟢 دائرة خضراء",
+            optionD = "⭐ نجمة ذهبية",
+            correctOptionIndex = 2,
+            explanation = "النمط يتكرر كل ٣ أشكال بالترتيب: (دائرة زرقاء، مثلث أحمر، دائرة خضراء)، إذن الشكل الناقص هو الدائرة الخضراء 🟢."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "بسرعة وملاحظة دقيقة: كم مرة ظهر الرقم (٧) في السلسلة التالية؟",
+            visualClueText = "٧  -  ١٧  -  ٢٨  -  ٧٠  -  ٤٥  -  ٧٧  -  ٩١",
+            optionA = "٣ مرات",
+            optionB = "٤ مرات",
+            optionC = "٥ مرات",
+            optionD = "٦ مرات",
+            correctOptionIndex = 2,
+            explanation = "ظهر الرقم (٧) خمس مرات: في (٧) مرة، وفي (١٧) مرة، وفي (٧٠) مرة، وفي (٧٧) مرتين! المجموع = ٥ مرات."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "إذا قرأنا الحروف التالية بالعكس من اليسار إلى اليمين، فما الكلمة التي ستظهر؟",
+            visualClueText = "[  ل  -  ب  -  ق  -  ت  -  س  -  م  ]",
+            optionA = "مستقبل",
+            optionB = "مستكشف",
+            optionC = "مبتكر",
+            optionD = "مدرسة",
+            correctOptionIndex = 0,
+            explanation = "عند ترتيب الحروف من اليسار لليمين (م - س - ت - ق - ب - ل) تتكون كلمة: «مستقبل»."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 1,
+            questionText = "انظر إلى المجموعات الأربع التالية بدقة: أي مجموعة منها تختلف عن البقية؟",
+            visualClueText = "(أ) ⭐🌙☀️   |   (ب) ⭐🌙☀️   |   (ج) ⭐☀️🌙   |   (د) ⭐🌙☀️",
+            optionA = "المجموعة (أ)",
+            optionB = "المجموعة (ب)",
+            optionC = "المجموعة (ج)",
+            optionD = "المجموعة (د)",
+            correctOptionIndex = 2,
+            explanation = "جميع المجموعات مرتبة (نجمة ثم هلال ثم شمس)، ما عدا المجموعة (ج) تبدلت فيها الشمس مع الهلال!"
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 2,
+            questionText = "لاحظ الجملة التالية جيداً: «ذهب طالب عبقري إلى مدرسة عيون مصر صباحاً».. كم عدد النقاط الموجودة فوق وتحت الحروف في كلمة (عيون)؟",
+            visualClueText = "كلمة التركيز: « عـ يـ و ن »",
+            optionA = "نقطتان فقط",
+            optionB = "٣ نقاط (نقطتا الياء ونقطة النون)",
+            optionC = "٤ نقاط",
+            optionD = "نقطة واحدة",
+            correctOptionIndex = 1,
+            explanation = "حرف العين والواو بدون نقاط، وحرف الياء تحته نقطتان، وحرف النون فوقه نقطة واحدة، فالمجموع ٣ نقاط."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 3,
+            questionText = "إذا كانت الساعة الحائطية تشير إلى الساعة (٣:٠٠ تماماً)، ونظرت إليها في مرآة مستوية، فكم ستبدو الساعة في المرآة؟",
+            visualClueText = "🪞 انعكاس عقرب الساعات أفقياً في المرآة",
+            optionA = "الساعة ٦:٠٠",
+            optionB = "الساعة ٩:٠٠",
+            optionC = "الساعة ١٢:٠٠",
+            optionD = "الساعة ٣:٣٠",
+            correctOptionIndex = 1,
+            explanation = "المرآة تعكس الاتجاه الأفقي (اليمين يصبح يساراً)، فعقرب الساعات المتجه للرقم ٣ يميناً سيظهر متجهاً للرقم ٩ يساراً!"
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.OBSERVATION_FOCUS.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 2,
+            questionText = "رتّب الكلمات التالية حسب عدد حروفها من الأصغر إلى الأكبر: (مصر - أهرامات - نيل - معرفة):",
+            visualClueText = "قارن: لكن انتبه للكلمات المتساوية!",
+            optionA = "مصر (٣) ⬅ نيل (٣) ⬅ معرفة (٥) ⬅ أهرامات (٧)",
+            optionB = "أهرامات ⬅ معرفة ⬅ مصر ⬅ نيل",
+            optionC = "معرفة ⬅ مصر ⬅ أهرامات ⬅ نيل",
+            optionD = "نيل ⬅ أهرامات ⬅ مصر ⬅ معرفة",
+            correctOptionIndex = 0,
+            explanation = "(مصر / نيل) ٣ حروف، ثم (معرفة) ٥ حروف، ثم (أهرامات) ٧ حروف."
+        ),
+
+        // ==================== 7. الثقافة والمعلومات العامة (GENERAL - 8 أسئلة، يُختار 4 في التصفيات) ====================
         QuestionEntity(
             categoryId = QuizCategory.GENERAL.id,
             gradeLevel = "الصف الخامس",
@@ -562,6 +805,56 @@ object InitialQuestionsData {
             optionD = "في محافظة الفيوم",
             correctOptionIndex = 0,
             explanation = "يقع المتحف المصري الكبير على هضبة الأهرامات بمحافظة الجيزة، ويضم كنوز الملك توت عنخ آمون كاملة."
+        ),
+
+        // ==================== 8. التكنولوجيا والابتكار (TECH_INNOVATION - 4 أسئلة، يُختار 2 في التصفيات) ====================
+        QuestionEntity(
+            categoryId = QuizCategory.TECH_INNOVATION.id,
+            gradeLevel = "الصف الرابع",
+            difficulty = 1,
+            questionText = "أي جزء في جهاز الكمبيوتر يُلقب بـ «عقل الحاسوب» لأنه يقوم بمعالجة البيانات والعمليات الحسابية؟",
+            optionA = "لوحة المفاتيح (Keyboard)",
+            optionB = "وحدة المعالجة المركزية (CPU)",
+            optionC = "الشاشة (Monitor)",
+            optionD = "الفأرة (Mouse)",
+            correctOptionIndex = 1,
+            explanation = "وحدة المعالجة المركزية (CPU) هي العقل المفكر للكمبيوتر المسؤول عن تنفيذ الأوامر والعمليات."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.TECH_INNOVATION.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 2,
+            questionText = "عند استخدام شبكة الإنترنت، ما هو التصرف الصحيح لحماية بياناتك الشخصية وأمانك الرقمي؟",
+            optionA = "مشاركة كلمة المرور مع الغرباء",
+            optionB = "اختيار كلمة مرور قوية وعدم مشاركة بياناتي الشخصية مع مجهولين",
+            optionC = "الضغط على أي رابط مجهول يظهر على الشاشة",
+            optionD = "كتابة رقم الهاتف والعنوان في التعليقات العامة",
+            correctOptionIndex = 1,
+            explanation = "الأمان الرقمي يتطلب استخدام كلمات مرور قوية تحتوي على حروف وأرقام ورموز، وعدم مشاركة البيانات الخاصة."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.TECH_INNOVATION.id,
+            gradeLevel = "الصف السادس",
+            difficulty = 2,
+            questionText = "ماذا نُسمي مجموعة الخطوات المرتبة والمنطقية التي نكتبها لحل مشكلة أو برمجة الحاسوب؟",
+            optionA = "الخوارزمية (Algorithm)",
+            optionB = "خلفية الشاشة",
+            optionC = "الذاكرة المؤقتة",
+            optionD = "الطابعة الليزرية",
+            correctOptionIndex = 0,
+            explanation = "الخوارزمية (نسبةً للعالم المسلم الخوارزمي) هي سلسلة خطوات منطقية مرتبة تُستخدم في البرمجة وحل المشكلات."
+        ),
+        QuestionEntity(
+            categoryId = QuizCategory.TECH_INNOVATION.id,
+            gradeLevel = "الصف الخامس",
+            difficulty = 1,
+            questionText = "ما هو النظام العددي الذي تفهمه أجهزة الكمبيوتر وتتعامل به داخلياً؟",
+            optionA = "النظام الثنائي المكون من (٠ و ١)",
+            optionB = "الحروف الهجائية فقط",
+            optionC = "الأرقام الرومانية القديمة",
+            optionD = "الإشارات الضوئية الملونة فقط",
+            correctOptionIndex = 0,
+            explanation = "يعمل الحاسوب بالنظام الثنائي (Binary System) الذي يعتمد على الرقمين (٠ و ١) لتمثيل البيانات."
         )
     )
 }

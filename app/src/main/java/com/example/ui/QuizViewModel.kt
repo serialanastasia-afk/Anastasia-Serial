@@ -3,10 +3,13 @@ package com.example.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.data.InitialQuestionsData
 import com.example.data.QuestionEntity
 import com.example.data.QuizCategory
 import com.example.data.QuizRepository
 import com.example.data.ScoreRecordEntity
+import com.example.data.StudentRegistrationEntity
+import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,14 +22,43 @@ import kotlinx.coroutines.launch
 
 enum class MainTab {
     HOME,
+    REGISTRATION,
+    STAGES_AND_GUIDE,
     TEAMS,
     QUESTION_BANK,
     LEADERBOARD
 }
 
+enum class GuideSubSection {
+    HOW_TO_PLAY,
+    TOURNAMENT_STAGES,
+    ABOUT_COMPETITION
+}
+
 sealed class ActiveSessionState {
     data object Idle : ActiveSessionState()
 
+    // Official 50-Question Online Qualifier (30 Minutes, free navigation between questions)
+    data class OnlineQualifierExam(
+        val studentName: String,
+        val gradeLevel: String,
+        val classroom: String,
+        val participationCode: String,
+        val questions: List<QuestionEntity>,
+        val currentIndex: Int = 0,
+        val selectedAnswers: Map<Int, Int> = emptyMap(), // questionIndex -> optionIndex (0..3)
+        val flaggedQuestions: Set<Int> = emptySet(),
+        val remainingSeconds: Int = 30 * 60, // 30 minutes = 1800 seconds
+        val totalSeconds: Int = 30 * 60
+    ) : ActiveSessionState() {
+        val currentQuestion: QuestionEntity
+            get() = questions[currentIndex]
+
+        val answeredCount: Int
+            get() = selectedAnswers.size
+    }
+
+    // Existing Interactive Arena (Solo Practice & Stage 2 School Team Battles)
     data class Playing(
         val isTeamMode: Boolean,
         val studentName: String,
@@ -58,8 +90,10 @@ sealed class ActiveSessionState {
 
     data class Completed(
         val isTeamMode: Boolean,
+        val isOfficialQualifier: Boolean = false,
         val winnerOrPlayerName: String,
         val gradeOrClassroom: String,
+        val participationCode: String = "",
         val team1Name: String,
         val team1Score: Int,
         val team2Name: String,
@@ -68,8 +102,10 @@ sealed class ActiveSessionState {
         val totalPossibleScore: Int,
         val correctCount: Int,
         val totalQuestions: Int,
+        val timeSpentSeconds: Int = 0,
         val category: QuizCategory,
-        val badgeTitle: String
+        val badgeTitle: String,
+        val domainBreakdown: Map<QuizCategory, Pair<Int, Int>> = emptyMap() // category -> (correct, total)
     ) : ActiveSessionState()
 }
 
@@ -81,20 +117,33 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     val allScores: StateFlow<List<ScoreRecordEntity>> = repository.allScores
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allRegistrations: StateFlow<List<StudentRegistrationEntity>> = repository.allRegistrations
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _selectedTab = MutableStateFlow(MainTab.HOME)
     val selectedTab: StateFlow<MainTab> = _selectedTab.asStateFlow()
+
+    private val _guideSubSection = MutableStateFlow(GuideSubSection.TOURNAMENT_STAGES)
+    val guideSubSection: StateFlow<GuideSubSection> = _guideSubSection.asStateFlow()
+
+    private val _showWelcomeScreen = MutableStateFlow(true)
+    val showWelcomeScreen: StateFlow<Boolean> = _showWelcomeScreen.asStateFlow()
+
+    // Current active registered student (if registered or logged in with participation code)
+    private val _activeRegistration = MutableStateFlow<StudentRegistrationEntity?>(null)
+    val activeRegistration: StateFlow<StudentRegistrationEntity?> = _activeRegistration.asStateFlow()
 
     // Setup configuration states for Solo Mode
     private val _studentName = MutableStateFlow("بطل عيون مصر")
     val studentName: StateFlow<String> = _studentName.asStateFlow()
 
-    private val _selectedGrade = MutableStateFlow("كل الصفوف (٤ - ٦ ابتدائي)")
+    private val _selectedGrade = MutableStateFlow("الصف الخامس الابتدائي")
     val selectedGrade: StateFlow<String> = _selectedGrade.asStateFlow()
 
     private val _questionCountPreference = MutableStateFlow(8)
     val questionCountPreference: StateFlow<Int> = _questionCountPreference.asStateFlow()
 
-    // Setup configuration states for Team Mode
+    // Setup configuration states for Team Mode (Stage 2 School Finals)
     private val _team1Name = MutableStateFlow("نسور عيون مصر (٥/أ)")
     val team1Name: StateFlow<String> = _team1Name.asStateFlow()
 
@@ -124,6 +173,23 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
     fun selectTab(tab: MainTab) {
         _selectedTab.value = tab
+    }
+
+    fun openGuideSection(section: GuideSubSection) {
+        _guideSubSection.value = section
+        _selectedTab.value = MainTab.STAGES_AND_GUIDE
+        _showWelcomeScreen.value = false
+    }
+
+    fun dismissWelcomeScreen(targetTab: MainTab = MainTab.HOME) {
+        _selectedTab.value = targetTab
+        _showWelcomeScreen.value = false
+    }
+
+    fun returnToWelcomeScreen() {
+        timerJob?.cancel()
+        _sessionState.value = ActiveSessionState.Idle
+        _showWelcomeScreen.value = true
     }
 
     fun updateStudentName(name: String) {
@@ -158,12 +224,242 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         _bankGradeFilter.value = grade
     }
 
+    // ==================== 3. Student Registration & Participation Code ====================
+    fun registerNewStudent(
+        fullName: String,
+        gradeLevel: String,
+        classroom: String,
+        studentNumberOrCode: String,
+        teamName: String,
+        parentPhone: String,
+        onGenerated: (StudentRegistrationEntity) -> Unit
+    ) {
+        val gradeDigit = when {
+            gradeLevel.contains("الرابع") -> "4"
+            gradeLevel.contains("الخامس") -> "5"
+            gradeLevel.contains("السادس") -> "6"
+            else -> "5"
+        }
+        val randomDigits = Random.nextInt(1000, 9999)
+        val generatedCode = "OM-$gradeDigit-$randomDigits"
+
+        val entity = StudentRegistrationEntity(
+            studentName = fullName.trim(),
+            gradeLevel = gradeLevel,
+            classroom = classroom.trim().ifEmpty { "أ" },
+            studentNumberOrId = studentNumberOrCode.trim().ifEmpty { "$randomDigits" },
+            teamName = teamName.trim(),
+            parentContact = parentPhone.trim(),
+            participationCode = generatedCode
+        )
+
+        viewModelScope.launch {
+            repository.registerStudent(entity)
+            _activeRegistration.value = entity
+            _studentName.value = entity.studentName
+            _selectedGrade.value = entity.gradeLevel
+            onGenerated(entity)
+        }
+    }
+
+    fun activateRegistration(registration: StudentRegistrationEntity) {
+        _activeRegistration.value = registration
+        _studentName.value = registration.studentName
+        _selectedGrade.value = registration.gradeLevel
+    }
+
+    fun lookupStudentByParticipationCode(
+        code: String,
+        onResult: (StudentRegistrationEntity?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val found = repository.findStudentByCode(code)
+            if (found != null) {
+                activateRegistration(found)
+            }
+            onResult(found)
+        }
+    }
+
+    // ==================== 5 & 6. Official 50-Question Online Qualifier (30 Minutes) ====================
+    fun startOfficialOnlineQualifierExam() {
+        val currentList = allQuestions.value.ifEmpty {
+            InitialQuestionsData.getSeedQuestions()
+        }
+
+        // Assemble exact quota from the 8 official domains:
+        // Science: 10, Math: 8, Arabic: 6, Egypt & World: 6, Logic: 8, Observation: 6, General: 4, Tech: 2 = 50 total
+        val assembledQuestions = mutableListOf<QuestionEntity>()
+        QuizCategory.officialQualifierDomains.forEach { domain ->
+            val domainQuestions = currentList.filter { it.categoryId == domain.id }.shuffled()
+            val picked = domainQuestions.take(domain.qualifierQuestionQuota)
+            assembledQuestions.addAll(picked)
+        }
+
+        // If for any reason custom deletions reduced a category below quota, top up to 50 from remaining
+        if (assembledQuestions.size < 50) {
+            val usedIds = assembledQuestions.map { it.id }.toSet()
+            val remaining = currentList.filter { it.id !in usedIds }.shuffled()
+            assembledQuestions.addAll(remaining.take(50 - assembledQuestions.size))
+        }
+
+        val activeReg = _activeRegistration.value
+        val name = activeReg?.studentName ?: _studentName.value.trim().ifEmpty { "بطل عيون مصر" }
+        val grade = activeReg?.gradeLevel ?: _selectedGrade.value
+        val classroom = activeReg?.classroom ?: "عام"
+        val code = activeReg?.participationCode ?: "OM-GUEST"
+
+        _showWelcomeScreen.value = false
+        _sessionState.value = ActiveSessionState.OnlineQualifierExam(
+            studentName = name,
+            gradeLevel = grade,
+            classroom = classroom,
+            participationCode = code,
+            questions = assembledQuestions,
+            currentIndex = 0,
+            selectedAnswers = emptyMap(),
+            flaggedQuestions = emptySet(),
+            remainingSeconds = 30 * 60,
+            totalSeconds = 30 * 60
+        )
+        startQualifierExamCountdown()
+    }
+
+    private fun startQualifierExamCountdown() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (true) {
+                delay(1000L)
+                val current = _sessionState.value
+                if (current is ActiveSessionState.OnlineQualifierExam) {
+                    if (current.remainingSeconds > 1) {
+                        _sessionState.update { state ->
+                            if (state is ActiveSessionState.OnlineQualifierExam) {
+                                state.copy(remainingSeconds = state.remainingSeconds - 1)
+                            } else state
+                        }
+                    } else {
+                        finishOnlineQualifierExam()
+                        break
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+    }
+
+    fun selectQualifierAnswer(optionIndex: Int) {
+        _sessionState.update { state ->
+            if (state is ActiveSessionState.OnlineQualifierExam) {
+                val updatedMap = state.selectedAnswers.toMutableMap()
+                updatedMap[state.currentIndex] = optionIndex
+                state.copy(selectedAnswers = updatedMap)
+            } else state
+        }
+    }
+
+    fun toggleQualifierQuestionFlag() {
+        _sessionState.update { state ->
+            if (state is ActiveSessionState.OnlineQualifierExam) {
+                val updatedFlags = state.flaggedQuestions.toMutableSet()
+                if (updatedFlags.contains(state.currentIndex)) {
+                    updatedFlags.remove(state.currentIndex)
+                } else {
+                    updatedFlags.add(state.currentIndex)
+                }
+                state.copy(flaggedQuestions = updatedFlags)
+            } else state
+        }
+    }
+
+    fun jumpToQualifierQuestion(index: Int) {
+        _sessionState.update { state ->
+            if (state is ActiveSessionState.OnlineQualifierExam && index in state.questions.indices) {
+                state.copy(currentIndex = index)
+            } else state
+        }
+    }
+
+    fun finishOnlineQualifierExam() {
+        val current = _sessionState.value as? ActiveSessionState.OnlineQualifierExam ?: return
+        timerJob?.cancel()
+
+        var totalCorrect = 0
+        val breakdown = mutableMapOf<QuizCategory, Pair<Int, Int>>()
+
+        current.questions.forEachIndexed { index, question ->
+            val chosen = current.selectedAnswers[index]
+            val isCorrect = chosen != null && chosen == question.correctOptionIndex
+            if (isCorrect) totalCorrect++
+
+            val cat = question.category
+            val prev = breakdown[cat] ?: (0 to 0)
+            breakdown[cat] = (prev.first + if (isCorrect) 1 else 0) to (prev.second + 1)
+        }
+
+        val finalScoreOutOf100 = totalCorrect * 2
+        val timeSpent = (current.totalSeconds - current.remainingSeconds).coerceAtLeast(1)
+        val accuracyRatio = if (current.questions.isNotEmpty()) {
+            totalCorrect.toFloat() / current.questions.size.toFloat()
+        } else 0f
+
+        val badge = when {
+            accuracyRatio >= 0.85f -> "متأهل للبطولة النهائية • وسام عبقري عيون مصر الذهبي 🏆"
+            accuracyRatio >= 0.70f -> "متأهل للبطولة النهائية • وسام التفوق الفضي 🥈"
+            accuracyRatio >= 0.50f -> "مرشح للتأهل • وسام التميز البرونزي 🥉"
+            else -> "وسام المحاولة والشجاعة • تدرب أكثر للتأهل!"
+        }
+
+        val completed = ActiveSessionState.Completed(
+            isTeamMode = false,
+            isOfficialQualifier = true,
+            winnerOrPlayerName = current.studentName,
+            gradeOrClassroom = "${current.gradeLevel} • فصل ${current.classroom}",
+            participationCode = current.participationCode,
+            team1Name = "",
+            team1Score = 0,
+            team2Name = "",
+            team2Score = 0,
+            finalScore = finalScoreOutOf100,
+            totalPossibleScore = current.questions.size * 2,
+            correctCount = totalCorrect,
+            totalQuestions = current.questions.size,
+            timeSpentSeconds = timeSpent,
+            category = QuizCategory.MIXED,
+            badgeTitle = badge,
+            domainBreakdown = breakdown
+        )
+        _sessionState.value = completed
+
+        viewModelScope.launch {
+            repository.saveScoreRecord(
+                ScoreRecordEntity(
+                    isTeamMatch = false,
+                    playerOrWinnerName = current.studentName,
+                    gradeOrClassroom = "${current.gradeLevel} (${current.classroom})",
+                    participationCode = current.participationCode,
+                    score = finalScoreOutOf100,
+                    totalPossibleScore = current.questions.size * 2,
+                    correctAnswers = totalCorrect,
+                    totalQuestions = current.questions.size,
+                    timeSpentSeconds = timeSpent,
+                    categoryTitle = "التصفيات الأونلاين (٥٠ سؤالاً)",
+                    badgeTitle = badge
+                )
+            )
+        }
+    }
+
+    // ==================== Existing Solo & Team Arena Modes ====================
     fun startSoloQuiz(category: QuizCategory) {
         val pool = filterQuestions(category, _selectedGrade.value)
         if (pool.isEmpty()) return
         val selectedQuestions = pool.shuffled().take(_questionCountPreference.value.coerceAtMost(pool.size))
 
-        val cleanName = _studentName.value.trim().ifEmpty { "بطل عيون مصر" }
+        val cleanName = _activeRegistration.value?.studentName
+            ?: _studentName.value.trim().ifEmpty { "بطل عيون مصر" }
+        _showWelcomeScreen.value = false
         _sessionState.value = ActiveSessionState.Playing(
             isTeamMode = false,
             studentName = cleanName,
@@ -194,10 +490,11 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         val t1 = _team1Name.value.trim().ifEmpty { "الفريق الأول" }
         val t2 = _team2Name.value.trim().ifEmpty { "الفريق الثاني" }
 
+        _showWelcomeScreen.value = false
         _sessionState.value = ActiveSessionState.Playing(
             isTeamMode = true,
             studentName = "",
-            selectedGrade = "منافسة الفرق",
+            selectedGrade = "المرحلة الثانية: البطولة النهائية بالمدرسة",
             team1Name = t1,
             team2Name = t2,
             team1Score = 0,
@@ -217,7 +514,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
     private fun filterQuestions(category: QuizCategory, gradeFilter: String): List<QuestionEntity> {
         val currentList = allQuestions.value.ifEmpty {
-            com.example.data.InitialQuestionsData.getSeedQuestions()
+            InitialQuestionsData.getSeedQuestions()
         }
         val byCategory = if (category == QuizCategory.MIXED) {
             currentList
@@ -233,7 +530,9 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         }
 
         if (specificGrade == null) return byCategory
-        val filteredByGrade = byCategory.filter { it.gradeLevel == specificGrade || it.gradeLevel == "عام" }
+        val filteredByGrade = byCategory.filter {
+            it.gradeLevel.contains(specificGrade) || it.gradeLevel == "عام"
+        }
         return filteredByGrade.ifEmpty { byCategory }
     }
 
@@ -251,7 +550,6 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                             } else state
                         }
                     } else {
-                        // Time expired -> reveal answer as time out (-1 selectedOptionIndex)
                         _sessionState.update { state ->
                             if (state is ActiveSessionState.Playing) {
                                 state.copy(
@@ -339,7 +637,6 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
         timerJob?.cancel()
         val question = current.currentQuestion
-        // Award base points without bonus and reveal answer
         val basePoints = question.points
         val newTeam1Score = if (current.isTeamMode && current.currentTeamTurn == 1) {
             current.team1Score + basePoints
@@ -416,8 +713,10 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
         val completedState = ActiveSessionState.Completed(
             isTeamMode = current.isTeamMode,
+            isOfficialQualifier = false,
             winnerOrPlayerName = winnerName,
             gradeOrClassroom = current.selectedGrade,
+            participationCode = _activeRegistration.value?.participationCode ?: "",
             team1Name = current.team1Name,
             team1Score = current.team1Score,
             team2Name = current.team2Name,
@@ -437,6 +736,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                     isTeamMatch = current.isTeamMode,
                     playerOrWinnerName = winnerName,
                     gradeOrClassroom = current.selectedGrade,
+                    participationCode = _activeRegistration.value?.participationCode ?: "",
                     team1Name = current.team1Name,
                     team1Score = current.team1Score,
                     team2Name = current.team2Name,

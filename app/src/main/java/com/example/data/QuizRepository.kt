@@ -7,8 +7,12 @@ import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Database(
-    entities = [QuestionEntity::class, ScoreRecordEntity::class],
-    version = 1,
+    entities = [
+        QuestionEntity::class,
+        ScoreRecordEntity::class,
+        StudentRegistrationEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,7 +28,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "oyoun_masr_quiz_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
@@ -35,30 +41,33 @@ abstract class AppDatabase : RoomDatabase() {
 class QuizRepository(private val quizDao: QuizDao) {
     val allQuestions: Flow<List<QuestionEntity>> = quizDao.getAllQuestions()
     val allScores: Flow<List<ScoreRecordEntity>> = quizDao.getAllScores()
+    val allRegistrations: Flow<List<StudentRegistrationEntity>> = quizDao.getAllRegistrations()
 
     suspend fun ensureSeedDataLoaded() {
         val count = quizDao.getQuestionCount()
-        if (count == 0) {
+        if (count < 55) {
             quizDao.insertQuestions(InitialQuestionsData.getSeedQuestions())
-            // Seed two inspiring initial school honor board records so the leaderboard is welcoming on first launch
+            // Seed initial school honor board records
             quizDao.insertScore(
                 ScoreRecordEntity(
                     isTeamMatch = false,
                     playerOrWinnerName = "يوسف أحمد محمود",
-                    gradeOrClassroom = "الصف السادس",
-                    score = 180,
-                    totalPossibleScore = 200,
-                    correctAnswers = 9,
-                    totalQuestions = 10,
-                    categoryTitle = "تحدي العباقرة الشامل",
-                    badgeTitle = "عبقري مدرسة عيون مصر الذهبي"
+                    gradeOrClassroom = "الصف السادس الابتدائي • ٦/أ",
+                    participationCode = "OM-6-9012",
+                    score = 96,
+                    totalPossibleScore = 100,
+                    correctAnswers = 48,
+                    totalQuestions = 50,
+                    timeSpentSeconds = 1140,
+                    categoryTitle = "اختبار التصفيات الأونلاين (٥٠ سؤالاً)",
+                    badgeTitle = "متأهل للنهائيات • وسام عبقري عيون مصر الذهبي"
                 )
             )
             quizDao.insertScore(
                 ScoreRecordEntity(
                     isTeamMatch = true,
                     playerOrWinnerName = "فريق صقور عيون مصر (5/أ)",
-                    gradeOrClassroom = "تحدي الفصول",
+                    gradeOrClassroom = "البطولة النهائية داخل المدرسة",
                     team1Name = "صقور عيون مصر (5/أ)",
                     team1Score = 150,
                     team2Name = "نجوم المستقبل (5/ب)",
@@ -72,6 +81,14 @@ class QuizRepository(private val quizDao: QuizDao) {
                 )
             )
         }
+    }
+
+    suspend fun registerStudent(registration: StudentRegistrationEntity) {
+        quizDao.insertRegistration(registration)
+    }
+
+    suspend fun findStudentByCode(code: String): StudentRegistrationEntity? {
+        return quizDao.findRegistrationByCode(code.trim().uppercase())
     }
 
     suspend fun addCustomQuestion(question: QuestionEntity) {

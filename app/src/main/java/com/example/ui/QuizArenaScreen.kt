@@ -207,6 +207,23 @@ fun ActiveQuizArenaScreen(
                                 .padding(vertical = 6.dp)
                                 .testTag("active_question_text")
                         )
+
+                        if (question.visualClueText.isNotBlank()) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White.copy(alpha = 0.94f)
+                            ) {
+                                Text(
+                                    text = question.visualClueText,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = RoyalNavyDark,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -844,6 +861,54 @@ fun CelebrationResultScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = CorrectEmerald
                         )
+
+                        if (state.participationCode.isNotBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = Color.White.copy(alpha = 0.14f)
+                            ) {
+                                Text(
+                                    text = "🎟️ كود المشاركة: ${state.participationCode}",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = ChampionshipGold,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+
+                        if (state.domainBreakdown.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color.White.copy(alpha = 0.08f))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "تفصيل الدرجات حسب المجالات الثمانية:",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = ChampionshipGold
+                                )
+                                state.domainBreakdown.forEach { (domain, pair) ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "${domain.emoji} ${domain.titleAr}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "${pair.first} / ${pair.second}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = CorrectEmerald
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(6.dp))
 

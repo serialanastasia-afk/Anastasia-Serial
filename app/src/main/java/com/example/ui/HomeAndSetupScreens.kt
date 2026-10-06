@@ -26,14 +26,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,7 +65,9 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.QuestionEntity
 import com.example.data.QuizCategory
+import com.example.data.StudentRegistrationEntity
 import com.example.ui.theme.ChampionshipGold
+import com.example.ui.theme.CorrectEmerald
 import com.example.ui.theme.RoyalNavyCard
 import com.example.ui.theme.RoyalNavyDark
 
@@ -69,7 +76,10 @@ fun categoryIcon(category: QuizCategory): ImageVector = when (category) {
     QuizCategory.EGYPT_HISTORY -> Icons.Default.AccountBalance
     QuizCategory.ARABIC -> Icons.Default.MenuBook
     QuizCategory.MATH_LOGIC -> Icons.Default.Calculate
+    QuizCategory.LOGIC_DEDUCTION -> Icons.Default.Extension
+    QuizCategory.OBSERVATION_FOCUS -> Icons.Default.Visibility
     QuizCategory.GENERAL -> Icons.Default.Public
+    QuizCategory.TECH_INNOVATION -> Icons.Default.Computer
     QuizCategory.MIXED -> Icons.Default.AutoAwesome
 }
 
@@ -78,19 +88,22 @@ fun HomeAndSetupScreens(
     studentName: String,
     selectedGrade: String,
     questionCount: Int,
+    activeRegistration: StudentRegistrationEntity?,
     allQuestions: List<QuestionEntity>,
     onStudentNameChange: (String) -> Unit,
     onGradeChange: (String) -> Unit,
     onQuestionCountChange: (Int) -> Unit,
+    onStartOfficialQualifierExam: () -> Unit,
+    onOpenRegistration: () -> Unit,
     onStartSoloQuiz: (QuizCategory) -> Unit,
     onNavigateToTeams: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gradeOptions = listOf(
-        "كل الصفوف (٤ - ٦ ابتدائي)",
-        "الصف الرابع",
-        "الصف الخامس",
-        "الصف السادس"
+        "الصف الرابع الابتدائي",
+        "الصف الخامس الابتدائي",
+        "الصف السادس الابتدائي",
+        "كل الصفوف (٤ - ٦ ابتدائي)"
     )
     val countOptions = listOf(5, 8, 10, 15)
 
@@ -109,12 +122,21 @@ fun HomeAndSetupScreens(
             item {
                 HeroStageBanner(
                     totalQuestionsCount = allQuestions.size,
-                    onQuickStartMixed = { onStartSoloQuiz(QuizCategory.MIXED) },
+                    onStartOfficialQualifier = onStartOfficialQualifierExam,
                     onNavigateToTeams = onNavigateToTeams
                 )
             }
 
-            // 2. Student Profile & Grade Selector Card
+            // 2. Stage 1 Official Online Qualifier Callout Card (50 Questions / 30 Minutes)
+            item {
+                OfficialQualifierLauncherCard(
+                    activeRegistration = activeRegistration,
+                    onStartQualifierExam = onStartOfficialQualifierExam,
+                    onOpenRegistration = onOpenRegistration
+                )
+            }
+
+            // 3. Student Profile & Grade Selector Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -129,34 +151,70 @@ fun HomeAndSetupScreens(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(38.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.School,
-                                        contentDescription = "بيانات الطالب",
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(20.dp)
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(38.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.School,
+                                            contentDescription = "بيانات الطالب",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = "بطاقة المتسابق العبقري",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (activeRegistration != null) {
+                                            "كود المشاركة الفعال: 🎟️ ${activeRegistration.participationCode}"
+                                        } else {
+                                            "اختر صفك الدراسي أو استخرج كود مشاركة رسمي"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
-                            Column {
-                                Text(
-                                    text = "بطاقة المتسابق العبقري",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "سجّل اسمك واختر صفك الدراسي قبل بدء المسابقة",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = ChampionshipGold.copy(alpha = 0.25f),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(onClick = onOpenRegistration)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ConfirmationNumber,
+                                        contentDescription = null,
+                                        tint = Color(0xFF92400E),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "بطاقة الكود",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color(0xFF92400E)
+                                    )
+                                }
                             }
                         }
 
@@ -173,7 +231,7 @@ fun HomeAndSetupScreens(
                         )
 
                         Text(
-                            text = "المرحلة الدراسية (الابتدائي الكبير):",
+                            text = "الصف الدراسي (الرابع / الخامس / السادس الابتدائي):",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -207,7 +265,7 @@ fun HomeAndSetupScreens(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "عدد أسئلة الجولة:",
+                                text = "عدد أسئلة التدريب الفردي:",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -226,7 +284,7 @@ fun HomeAndSetupScreens(
                 }
             }
 
-            // 3. Categories Section Header
+            // 4. Categories Section Header (All 8 Official Domains + Mixed)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -235,12 +293,12 @@ fun HomeAndSetupScreens(
                 ) {
                     Column {
                         Text(
-                            text = "اختر مجال التحدي",
+                            text = "مجالات عباقرة عيون مصر",
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "اضغط على أي مجال لبدء المسابقة فوراً",
+                            text = "اضغط على أي مجال للتدريب السريع أو خوض جولة فردية",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -250,7 +308,7 @@ fun HomeAndSetupScreens(
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Text(
-                            text = "٦ مجالات معرفية",
+                            text = "٨ مجالات + شامل",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -259,7 +317,7 @@ fun HomeAndSetupScreens(
                 }
             }
 
-            // 4. Category Cards
+            // 5. Category Cards
             items(QuizCategory.entries) { category ->
                 val countForCategory = if (category == QuizCategory.MIXED) {
                     allQuestions.size
@@ -281,9 +339,115 @@ fun HomeAndSetupScreens(
 }
 
 @Composable
+private fun OfficialQualifierLauncherCard(
+    activeRegistration: StudentRegistrationEntity?,
+    onStartQualifierExam: () -> Unit,
+    onOpenRegistration: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = RoyalNavyCard),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = ChampionshipGold
+                    )
+                    Text(
+                        text = "المرحلة الأولى: التصفيات الأونلاين 🌐",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = CorrectEmerald.copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = "٥٠ سؤالاً • ٣٠ دقيقة",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = CorrectEmerald,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = "التوزيع الرسمي: العلوم (١٠) • الرياضيات (٨) • المنطق (٨) • اللغة العربية (٦) • مصر والعالم (٦) • الملاحظة والتركيز (٦) • الثقافة العامة (٤) • التكنولوجيا (٢).",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFCBD5E1)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = onStartQualifierExam,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CorrectEmerald,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .testTag("start_official_qualifier_button")
+                ) {
+                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "بدء اختبار الـ ٥٠ سؤالاً",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+
+                Button(
+                    onClick = onOpenRegistration,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.14f),
+                        contentColor = ChampionshipGold
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .height(48.dp)
+                        .testTag("open_registration_card_button")
+                ) {
+                    Text(
+                        text = if (activeRegistration != null) {
+                            "🎟️ ${activeRegistration.participationCode}"
+                        } else {
+                            "🎟️ استخراج كود"
+                        },
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun HeroStageBanner(
     totalQuestionsCount: Int,
-    onQuickStartMixed: () -> Unit,
+    onStartOfficialQualifier: () -> Unit,
     onNavigateToTeams: () -> Unit
 ) {
     Card(
@@ -314,7 +478,7 @@ private fun HeroStageBanner(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -346,13 +510,13 @@ private fun HeroStageBanner(
                 }
 
                 Text(
-                    text = "عباقرة مدرسة عيون مصر",
+                    text = "🏆 عباقرة عيون مصر",
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White
                 )
 
                 Text(
-                    text = "المسابقة الثقافية الكبرى لطلاب الصفوف الرابع والخامس والسادس الابتدائي في العلوم، تاريخ مصر، اللغة العربية، الرياضيات، والمعلومات العامة.",
+                    text = "«فكّر… أسرع. اعرف… أكثر. العب… كفريق!» — مسابقة الذكاء والمعرفة لطلاب الصفوف الرابع والخامس والسادس الابتدائي.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFE2E8F0)
                 )
@@ -362,7 +526,7 @@ private fun HeroStageBanner(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
-                        onClick = onQuickStartMixed,
+                        onClick = onStartOfficialQualifier,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = ChampionshipGold,
                             contentColor = RoyalNavyDark
@@ -380,7 +544,7 @@ private fun HeroStageBanner(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "تحدي العباقرة الشامل",
+                            text = "اختبار التصفيات (٥٠ سؤالاً)",
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
@@ -403,7 +567,7 @@ private fun HeroStageBanner(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "تحدي الفصول",
+                            text = "نهائيات الفرق",
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
@@ -468,7 +632,7 @@ private fun CategoryChallengeCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = category.titleAr,
+                        text = "${category.emoji} ${category.titleAr}",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -485,7 +649,7 @@ private fun CategoryChallengeCard(
                     }
                 }
                 Text(
-                    text = category.subtitleAr,
+                    text = "${category.subtitleAr} • (حصة التصفيات: ${category.qualifierQuestionQuota} أسئلة)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -552,13 +716,13 @@ fun TeamBattleSetupScreen(
                                 modifier = Modifier.size(32.dp)
                             )
                             Text(
-                                text = "كأس الفصول • مدرسة عيون مصر",
+                                text = "المرحلة الثانية: البطولة النهائية بالمدرسة 🏫",
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = Color.White
                             )
                         }
                         Text(
-                            text = "منافسة حماسية بين فريقين أو فصلين دراسيين! يتناوب الفريقان على الإجابة عن الأسئلة مع احتساب نقاط السرعة ومساعدات العباقرة.",
+                            text = "منافسة حماسية مباشرة بين الفرق المتأهلة داخل مدرسة عيون مصر! يتناوب الفريقان على الإجابة عن الأسئلة مع احتساب نقاط السرعة ومساعدات العباقرة.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFFCBD5E1)
                         )
@@ -616,14 +780,7 @@ fun TeamBattleSetupScreen(
                                 FilterChip(
                                     selected = selectedCategory == cat,
                                     onClick = { onCategorySelect(cat) },
-                                    label = { Text(cat.titleAr) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = categoryIcon(cat),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    },
+                                    label = { Text("${cat.emoji} ${cat.titleAr}") },
                                     modifier = Modifier.testTag("team_cat_chip_${cat.id}")
                                 )
                             }

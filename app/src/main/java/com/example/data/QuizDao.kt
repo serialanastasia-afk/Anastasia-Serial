@@ -23,7 +23,7 @@ interface QuizDao {
     @Query("DELETE FROM questions WHERE id = :id")
     suspend fun deleteQuestionById(id: Int)
 
-    @Query("SELECT * FROM score_records ORDER BY score DESC, timestamp DESC")
+    @Query("SELECT * FROM score_records ORDER BY score DESC, timeSpentSeconds ASC, timestamp DESC")
     fun getAllScores(): Flow<List<ScoreRecordEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -31,4 +31,13 @@ interface QuizDao {
 
     @Query("DELETE FROM score_records")
     suspend fun clearAllScores()
+
+    @Query("SELECT * FROM student_registrations ORDER BY registeredAt DESC")
+    fun getAllRegistrations(): Flow<List<StudentRegistrationEntity>>
+
+    @Query("SELECT * FROM student_registrations WHERE participationCode = :code LIMIT 1")
+    suspend fun findRegistrationByCode(code: String): StudentRegistrationEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRegistration(registration: StudentRegistrationEntity): Long
 }
